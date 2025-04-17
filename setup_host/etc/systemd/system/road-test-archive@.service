@@ -1,0 +1,13 @@
+[Unit]
+Description=Archive road test data when disk with UUID %i is plugged in
+After=local-fs.target
+Requires=dev-disk-by\x2duuid-%i.device
+
+[Service]
+Type=oneshot
+User=your_user
+Group=your_group
+Environment=DEVICE_UUID=%i
+ExecStart=/usr/local/bin/road_test_archive.sh
+StandardOutput=journal
+StandardError=journal

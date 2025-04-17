@@ -1,0 +1,1 @@
+ACTION=="add", SUBSYSTEM=="block", ENV{ID_FS_UUID}=="UUID_TO_CONFIGURE", TAG+="systemd", ENV{SYSTEMD_WANTS}+="road-test-archive@.service"
