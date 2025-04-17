@@ -13,18 +13,18 @@ set -euo pipefail
 IFS=$'\n\t '
 
 check_env_vars() {
-  if [[ ! -v WORKSPACE || -z "${WORKSPACE}" ]]; then
-    echo "Error: WORKSPACE environment variable missing or empty."
-    exit 1
-  fi
+    if [[ ! -v WORKSPACE || -z "${WORKSPACE}" ]]; then
+        echo "Error: WORKSPACE environment variable missing or empty."
+        exit 1
+    fi
 
-  if [[ ! -v DEVICE_UUID || -z "${DEVICE_UUID}" ]]; then
-    echo "Error: DEVICE_UUID environment variable missing or empty."
-    exit 1
-  fi
+    if [[ ! -v DEVICE_UUID || -z "${DEVICE_UUID}" ]]; then
+        echo "Error: DEVICE_UUID environment variable missing or empty."
+        exit 1
+    fi
 
-  echo "WORKSPACE : ${WORKSPACE}"
-  echo "DEVICE_UUID : ${DEVICE_UUID}"
+    echo "WORKSPACE : ${WORKSPACE}"
+    echo "DEVICE_UUID : ${DEVICE_UUID}"
 }
 
 # Define readonly constants
@@ -35,12 +35,19 @@ readonly LOG_TAG="road-test-archive"
 readonly ARCHIVE_DIRECTORIES=("log" "bag" "core")
 readonly LOCK_FILE="/var/lock/$(basename "$0").lock" # More explicit lock file path definition
 
-# Define the log function to output to stdout and syslog, including a timestamp.
+# Define the log function to output to stdout, syslog, and a local file, including a timestamp.
 log() {
-    local msg="$*"
+    local msg="$1"
+    local log_type="${2:-}" # Optional log type (e.g., "local")
     local timestamp=$(date +'%Y-%m-%d %H:%M:%S')
-    echo "[${timestamp}] [${LOG_TAG}] ${msg}"
-    logger -t "${LOG_TAG}" "${msg}"
+    local log_line="[${timestamp}] [${LOG_TAG}] ${msg}"
+
+    echo "${log_line}" # Output to stdout
+    logger -t "${LOG_TAG}" "${msg}" # Output to syslog
+
+    if [[ "${log_type}" == "local" && -v LOCAL_LOG_FILE ]]; then
+        echo "${log_line}" >> "${LOCAL_LOG_FILE}"
+    fi
 }
 
 # Define the cleanup function to be executed upon script exit, recording success or failure.
@@ -105,42 +112,38 @@ archive_data() {
     local ts target_dir
     ts=$(date +'%Y-%m-%d_%H-%M-%S')
     target_dir="${MOUNT_POINT}/${ts}"
+    readonly LOCAL_LOG_FILE="${target_dir}/archive.log"
 
-    log "📂 Creating archive directory: '${target_dir}'"
+    log "📂 Creating archive directory: '${target_dir}'" "local"
     mkdir -p "${target_dir}"
     if [[ $? -ne 0 ]]; then
         log "❌ Failed to create archive directory: '${target_dir}'"
         exit 1
     fi
 
-    log "📂 Archiving data to: '${target_dir}'"
+    log "📂 Archiving data to: '${target_dir}'" "local"
 
     for d in "${ARCHIVE_DIRECTORIES[@]}"; do
         local src="${ARCHIVE_BASE}/${d}"
         if [[ -d "${src}" ]]; then
-            log "☁️ Syncing directory: '${src}' → '${target_dir}/${d}'"
-            # Using --progress can display the transfer progress for easier monitoring.
-            # Using --stats can display transfer statistics.
-            # Removed the separate log file; rsync output is now directly piped to the log function.
+            log "☁️ Syncing directory: '${src}' → '${target_dir}/${d}'" "local"
             rsync -rpt --copy-links --no-o --no-g --no-p \
                   --delete --progress --stats "${src}/" "${target_dir}/${d}/" | while IFS= read -r line; do
-                log "   ${line}" # Indent to display rsync output
+                log "    ${line}" "local" # Indent to display rsync output
             done
             if [[ $? -ne 0 ]]; then
-                log "⚠️ Failed to sync directory: '${src}'"
+                log "⚠️ Failed to sync directory: '${src}'" "local"
             fi
         else
-            log "⚠️ Source directory missing: '${src}'"
+            log "⚠️ Source directory missing: '${src}'" "local"
         fi
     done
 
-    log "🔄 Flushing disk buffers"
+    log "🔄 Flushing disk buffers" "local"
     sync
-    log "📑 Writing completion sentinel file: '${target_dir}/.ARCHIVE_COMPLETE'"
-    touch "${target_dir}/.ARCHIVE_COMPLETE"
-    if [[ $? -ne 0 ]]; then
-        log "⚠️ Failed to write completion sentinel file."
-    fi
+
+    # Log the completion to the local file as well.
+    log "✅ Archive process completed for directory: '${target_dir}'" "local"
 }
 
 # Main function
