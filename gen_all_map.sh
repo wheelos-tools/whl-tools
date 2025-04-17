@@ -38,7 +38,7 @@ TOPO_CREATOR="./bazel-bin/modules/routing/topo_creator/topo_creator"
 
 # Run the map generator
 echo "Generating map files to: ${NEW_MAP_PATH}"
-"${SIM_MAP_GENERATOR}" -map_dir="${NEW_MAP_PATH}" -output_dir="${NEW_MAP_PATH}"
+"${SIM_MAP_GENERATOR}" -map_dir="${NEW_MAP_PATH}" -output_dir="${NEW_MAP_PATH}" -downsample_distance=1
 
 # Check if the map generator ran successfully (optional, but recommended)
 if [ $? -ne 0 ]; then
