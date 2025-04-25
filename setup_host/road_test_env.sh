@@ -2,16 +2,17 @@
 
 # ------------------------------- config -------------------------------
 UUID_TO_CONFIGURE="76C8-9244"
-APOLLO_WORKSPACE="/home/zero/01code/apollo"
+APOLLO_WORKSPACE="YOUR_WORKSPACE"
+WEBHOOK_URL="YOUR_WEBHOOK_URL"
 
 USER=$(whoami)
 GROUP=$(id -g -n)
 
+SERVICE_DIR="/etc/systemd/system"
 SERVICE_NAME="road-test-archive"
 SERVICE_FILE="${SERVICE_NAME}@.service"
 SERVICE_INSTANCE="${SERVICE_NAME}@${UUID_TO_CONFIGURE}.service"
 
-SERVICE_DIR="/etc/systemd/system"
 UDEV_RULES_DIR="/etc/udev/rules.d"
 SCRIPT_DIR="/usr/local/bin"
 ARCHIVE_BASE_DIR="/mnt"
@@ -74,6 +75,33 @@ set_permissions() {
   }
 }
 
+set_env() {
+  local var="$1"
+  local val="$2"
+  local target="$SERVICE_DIR/$SERVICE_FILE"
+
+  [ -z "$var" ] && { log_error "Var name empty"; return 1; }
+  [ ! -f "$target" ] && { log_error "File not found: $target"; return 1; }
+
+  log_info "Setting ${var} to '${val}'"
+
+  # Check if the line exists and modify it, OR add it if it doesn't exist
+  if grep -q "^Environment=${var}=" "$target"; then
+    # Found, modify the line
+    sed -i "s|^Environment=${var}=.*|Environment=${var}=\"${val}\"|" "$target" || {
+        log_error "Modify failed: ${var}"; return 1;
+    }
+    log_info "${var} modified."
+  else
+    # Not found, add the line
+    echo "Environment=${var}=\"${val}\"" >> "$target" || {
+        log_error "Add failed: ${var}"; return 1;
+    }
+    log_info "${var} added."
+  fi
+  return 0
+}
+
 modify_service_file() {
   log_info "Modifying service file..."
   sed -i "s/your_user/$USER/g" "$SERVICE_DIR/$SERVICE_FILE" || {
@@ -84,10 +112,9 @@ modify_service_file() {
     log_error "Failed to replace 'your_group' in $SERVICE_DIR/$SERVICE_FILE."
     exit 1
   }
-  grep -q "^Environment=APOLLO_WORKSPACE=" "$SERVICE_DIR/$SERVICE_FILE" || echo "Environment=APOLLO_WORKSPACE=\"$APOLLO_WORKSPACE\"" >> "$SERVICE_DIR/$SERVICE_FILE" || {
-    log_error "Failed to add APOLLO_WORKSPACE environment variable to $SERVICE_DIR/$SERVICE_FILE."
-    exit 1
-  }
+  # Use the concise set_env function for environment variables
+  set_env "WEBHOOK_URL" "$WEBHOOK_URL" || exit 1
+  set_env "APOLLO_WORKSPACE" "$APOLLO_WORKSPACE" || exit 1
 }
 
 modify_udev_rules_file() {

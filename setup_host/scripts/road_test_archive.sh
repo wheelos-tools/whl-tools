@@ -21,6 +21,11 @@ check_env_vars() {
         echo "Error: DEVICE_UUID environment variable is missing or empty."
         exit 1
     fi
+    # WEBHOOK_URL is passed via service environment variables
+    if [[ ! -v WEBHOOK_URL || -z "${WEBHOOK_URL}" ]]; then
+        echo "Error: WEBHOOK_URL environment variable is missing or empty."
+        exit 1
+    fi
 
     : "${ARCHIVE_BASE_DIR:=${WORKSPACE}/mnt}"
 
@@ -32,7 +37,6 @@ check_env_vars() {
 readonly LOG_TAG="road-test-archive"
 readonly ARCHIVE_DIRECTORIES=("log" "bag" "core")
 readonly LOCK_FILE="/var/lock/$(basename "$0").lock"
-readonly WEBHOOK_URL="https://www.feishu.cn/flow/api/trigger-webhook/b993f029ca101f45033a3dc75d1bffcc"
 
 readonly MOUNT_POINT="${ARCHIVE_BASE_DIR}/road_test"
 readonly DEVICE_PATH="/dev/disk/by-uuid/${DEVICE_UUID}"
