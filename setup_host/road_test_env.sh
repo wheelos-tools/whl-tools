@@ -1,9 +1,139 @@
 #!/bin/bash
 
-# ------------------------------- config -------------------------------
-UUID_TO_CONFIGURE="76C8-9244"
-APOLLO_WORKSPACE="YOUR_WORKSPACE"
-WEBHOOK_URL="YOUR_WEBHOOK_URL"
+set -euo pipefail
+IFS=$' \n\t'
+
+# ----------------------------------------------------------------------------
+# road_test.sh - configure and persist Apollo test settings
+# ----------------------------------------------------------------------------
+
+# Default config file (stored in tmpfs)
+readonly CONFIG_FILE="/tmp/road_test.conf"
+
+# ----------------------------------------------------------------------------
+# Variables
+# ----------------------------------------------------------------------------
+APOLLO_WORKSPACE=""
+WEBHOOK_URL=""
+UUID_TO_CONFIGURE=""
+
+# ----------------------------------------------------------------------------
+# Logging
+# ----------------------------------------------------------------------------
+log_info()  { printf "[INFO]    %s\n" "$*"; }
+log_error() { printf "[ERROR]   %s\n" "$*" >&2; }
+
+# ----------------------------------------------------------------------------
+# Config Persistence
+# ----------------------------------------------------------------------------
+persist_config() {
+  cat > "$CONFIG_FILE" <<-EOF
+APOLLO_WORKSPACE="$APOLLO_WORKSPACE"
+WEBHOOK_URL="$WEBHOOK_URL"
+UUID_TO_CONFIGURE="$UUID_TO_CONFIGURE"
+EOF
+}
+
+load_config() {
+  [[ -r "$CONFIG_FILE" ]] && source "$CONFIG_FILE" || true
+}
+
+# ----------------------------------------------------------------------------
+# Validation Helpers
+# ----------------------------------------------------------------------------
+validate_dir() {
+  [[ -d "$1" ]] || { log_error "Directory not found: $1"; exit 1; }
+}
+
+validate_url() {
+  [[ "$1" =~ ^https?://[^/]+ ]] || { log_error "Invalid URL: $1"; exit 1; }
+}
+
+# ----------------------------------------------------------------------------
+# User Prompt Helper
+# ----------------------------------------------------------------------------
+prompt() {
+  local var_name="$1"; shift
+  local prompt_msg="$*"
+  local default_val="${!var_name:-}"
+  local input
+
+  if [[ -n "$default_val" ]]; then
+    read -rp "$prompt_msg [$default_val]: " input
+    input="${input:-$default_val}"
+  else
+    read -rp "$prompt_msg: " input
+  fi
+  printf -v "$var_name" '%s' "$input"
+}
+
+# ----------------------------------------------------------------------------
+# UUID Discovery
+# ----------------------------------------------------------------------------
+discover_uuids() {
+  blkid -o export | awk -F= '/^DEVNAME/ {dev=$2} /^UUID/ {print dev":"$2}'
+}
+
+# ----------------------------------------------------------------------------
+# Step Implementations
+# ----------------------------------------------------------------------------
+step_apollo_workspace() {
+  prompt APOLLO_WORKSPACE "Enter Apollo workspace path"
+  validate_dir "$APOLLO_WORKSPACE"
+}
+
+step_webhook_url() {
+  prompt WEBHOOK_URL "Enter notification Webhook URL"
+  validate_url "$WEBHOOK_URL"
+}
+
+step_select_uuid() {
+  mapfile -t choices < <(discover_uuids)
+  [[ ${#choices[@]} -gt 0 ]] || { log_error "No block devices with UUIDs found."; exit 1; }
+
+  log_info "Available filesystems:";
+  for i in "${!choices[@]}"; do
+    IFS=":" read -r dev uuid <<< "${choices[i]}"
+    printf '  %d) %s (UUID: %s)\n' "$((i+1))" "$dev" "$uuid"
+  done
+
+  local default_index=""
+  if [[ -n "$UUID_TO_CONFIGURE" ]]; then
+    for i in "${!choices[@]}"; do
+      [[ "${choices[i]#*:}" == "$UUID_TO_CONFIGURE" ]] && default_index=$((i+1))
+    done
+  fi
+
+  while :; do
+    if [[ -n "$default_index" ]]; then
+      read -rp "Select an entry [${default_index}]: " sel
+      sel="${sel:-$default_index}"
+    else
+      read -rp "Select an entry (1-${#choices[@]}): " sel
+    fi
+    if [[ "$sel" =~ ^[0-9]+$ ]] && (( sel>=1 && sel<=${#choices[@]} )); then
+      UUID_TO_CONFIGURE="${choices[sel-1]#*:}"
+      break
+    fi
+    log_error "Invalid selection: $sel"
+  done
+}
+
+# ----------------------------------------------------------------------------
+# Execution Flow
+# ----------------------------------------------------------------------------
+load_config
+step_apollo_workspace
+step_webhook_url
+step_select_uuid
+persist_config
+
+log_info "Configuration complete."
+cat <<-EOF
+Apollo Workspace : $APOLLO_WORKSPACE
+Webhook URL      : $WEBHOOK_URL
+Disk UUID        : $UUID_TO_CONFIGURE
+EOF
 
 USER=$(whoami)
 GROUP=$(id -g -n)
@@ -26,14 +156,6 @@ SYSTEMD_SOURCE_DIR="$SETUP_HOST_BASEDIR/etc/systemd/system"
 UDEV_SOURCE_DIR="$SETUP_HOST_BASEDIR/etc/udev/rules.d"
 
 # ------------------------------- function -------------------------------
-
-log_info() {
-  echo "[INFO] $1"
-}
-
-log_error() {
-  echo "[ERROR] $1" >&2
-}
 
 check_root() {
   if [[ "$EUID" -ne 0 ]]; then
