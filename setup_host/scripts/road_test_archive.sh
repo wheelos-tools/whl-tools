@@ -30,7 +30,7 @@ check_env_vars() {
     : "${ARCHIVE_BASE_DIR:=${WORKSPACE}/mnt}"
     readonly MOUNT_POINT="${ARCHIVE_BASE_DIR}/road_test"
     readonly DEVICE_PATH="/dev/disk/by-uuid/${DEVICE_UUID}"
-    readonly ARCHIVE_BASE="${WORKSPACE}/data"
+    readonly ARCHIVE_BASE="${APOLLO_WORKSPACE}/data"
 
     echo "APOLLO_WORKSPACE: ${APOLLO_WORKSPACE}"
     echo "DEVICE_UUID: ${DEVICE_UUID}"
