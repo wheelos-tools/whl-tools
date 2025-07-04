@@ -12,8 +12,8 @@ IFS=$'\n\t '
 
 check_env_vars() {
     # WORKSPACE is expected to be set as an environment variable
-    if [[ ! -v WORKSPACE || -z "${WORKSPACE}" ]]; then
-        echo "Error: WORKSPACE environment variable is missing or empty."
+    if [[ ! -v APOLLO_WORKSPACE || -z "${APOLLO_WORKSPACE}" ]]; then
+        echo "Error: APOLLO_WORKSPACE environment variable is missing or empty."
         exit 1
     fi
     # DEVICE_UUID is passed via udev environment variables when the device is plugged in
@@ -27,9 +27,12 @@ check_env_vars() {
         exit 1
     fi
 
-    : "${ARCHIVE_BASE_DIR:=${WORKSPACE}/mnt}"
+    : "${ARCHIVE_BASE_DIR:=${APOLLO_WORKSPACE}/mnt}"
+    readonly MOUNT_POINT="${ARCHIVE_BASE_DIR}/road_test"
+    readonly DEVICE_PATH="/dev/disk/by-uuid/${DEVICE_UUID}"
+    readonly ARCHIVE_BASE="${APOLLO_WORKSPACE}/data"
 
-    echo "WORKSPACE: ${WORKSPACE}"
+    echo "APOLLO_WORKSPACE: ${APOLLO_WORKSPACE}"
     echo "DEVICE_UUID: ${DEVICE_UUID}"
     echo "ARCHIVE_BASE_DIR: ${ARCHIVE_BASE_DIR}"
 }
@@ -38,9 +41,7 @@ readonly LOG_TAG="road-test-archive"
 readonly ARCHIVE_DIRECTORIES=("log" "bag" "core")
 readonly LOCK_FILE="/var/lock/$(basename "$0").lock"
 
-readonly MOUNT_POINT="${ARCHIVE_BASE_DIR}/road_test"
-readonly DEVICE_PATH="/dev/disk/by-uuid/${DEVICE_UUID}"
-readonly ARCHIVE_BASE="${WORKSPACE}/data"
+
 
 DID_MOUNT=false
 START_TS=""
