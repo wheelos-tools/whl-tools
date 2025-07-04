@@ -28,6 +28,9 @@ check_env_vars() {
     fi
 
     : "${ARCHIVE_BASE_DIR:=${WORKSPACE}/mnt}"
+    readonly MOUNT_POINT="${ARCHIVE_BASE_DIR}/road_test"
+    readonly DEVICE_PATH="/dev/disk/by-uuid/${DEVICE_UUID}"
+    readonly ARCHIVE_BASE="${WORKSPACE}/data"
 
     echo "APOLLO_WORKSPACE: ${APOLLO_WORKSPACE}"
     echo "DEVICE_UUID: ${DEVICE_UUID}"
@@ -38,9 +41,7 @@ readonly LOG_TAG="road-test-archive"
 readonly ARCHIVE_DIRECTORIES=("log" "bag" "core")
 readonly LOCK_FILE="/var/lock/$(basename "$0").lock"
 
-readonly MOUNT_POINT="${ARCHIVE_BASE_DIR}/road_test"
-readonly DEVICE_PATH="/dev/disk/by-uuid/${DEVICE_UUID}"
-readonly ARCHIVE_BASE="${WORKSPACE}/data"
+
 
 DID_MOUNT=false
 START_TS=""
