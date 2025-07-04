@@ -151,9 +151,9 @@ UDEV_RULE_FILE="99-roadtest.rules"
 SCRIPT_FILE="${SERVICE_NAME}.sh"
 
 SETUP_HOST_BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
-SCRIPTS_SOURCE_DIR="$SETUP_HOST_BASEDIR/scripts"
-SYSTEMD_SOURCE_DIR="$SETUP_HOST_BASEDIR/etc/systemd/system"
-UDEV_SOURCE_DIR="$SETUP_HOST_BASEDIR/etc/udev/rules.d"
+SCRIPTS_SOURCE_DIR="$SETUP_HOST_BASEDIR/setup_host/scripts"
+SYSTEMD_SOURCE_DIR="$SETUP_HOST_BASEDIR/setup_host/etc/systemd/system"
+UDEV_SOURCE_DIR="$SETUP_HOST_BASEDIR/setup_host/etc/udev/rules.d"
 
 # ------------------------------- function -------------------------------
 
