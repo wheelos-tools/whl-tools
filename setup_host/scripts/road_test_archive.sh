@@ -27,7 +27,7 @@ check_env_vars() {
         exit 1
     fi
 
-    : "${ARCHIVE_BASE_DIR:=${WORKSPACE}/mnt}"
+    : "${ARCHIVE_BASE_DIR:=${APOLLO_WORKSPACE}/mnt}"
     readonly MOUNT_POINT="${ARCHIVE_BASE_DIR}/road_test"
     readonly DEVICE_PATH="/dev/disk/by-uuid/${DEVICE_UUID}"
     readonly ARCHIVE_BASE="${APOLLO_WORKSPACE}/data"
