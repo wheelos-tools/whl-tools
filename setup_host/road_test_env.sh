@@ -139,7 +139,7 @@ USER=$(whoami)
 GROUP=$(id -g -n)
 
 SERVICE_DIR="/etc/systemd/system"
-SERVICE_NAME="road-test-archive"
+SERVICE_NAME="road_test_archive"
 SERVICE_FILE="${SERVICE_NAME}@.service"
 SERVICE_INSTANCE="${SERVICE_NAME}@${UUID_TO_CONFIGURE}.service"
 
