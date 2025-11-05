@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  file-server:
+    image: nginx:latest
+    container_name: http-file-server
+    ports:
+      - "8080:80"
+    volumes:
+      # Mount 1: The shared files (as before)
+      - ./share:/usr/share/nginx/html:ro
+      # Mount 2: Our custom nginx config to enable directory browsing
+      - ./nginx-conf/autoindex.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
