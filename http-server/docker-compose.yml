@@ -1,14 +1,46 @@
 version: '3.8'
 
 services:
+  # 1. 源码包文件服务器
   file-server:
     image: nginx:latest
-    container_name: http-file-server
+    container_name: bazel-file-server
     ports:
       - "8080:80"
     volumes:
-      # Mount 1: The shared files (as before)
       - ./share:/usr/share/nginx/html:ro
-      # Mount 2: Our custom nginx config to enable directory browsing
       - ./nginx-conf/autoindex.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
+  # 2. Bzlmod 注册表服务器
+  bazel-registry:
+    image: nginx:latest
+    container_name: bazel-registry
+    ports:
+      - "8081:80"
+    volumes:
+      - ./registry:/usr/share/nginx/html:ro
+      - ./nginx-conf/autoindex.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
+  # 3. Squid 缓存代理
+  squid-proxy:
+    image: ubuntu/squid:latest
+    container_name: bazel-proxy
+    ports:
+      - "3128:3128"
+    volumes:
+      - ./squid/cache:/var/spool/squid
+      - ./squid/squid.conf:/etc/squid/squid.conf
+    restart: unless-stopped
+
+  # 4. 可视化管理
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+    ports:
+      - "8082:80"
+    volumes:
+      - .:/srv
+      - ./filebrowser/database.db:/database/filebrowser.db
     restart: unless-stopped
