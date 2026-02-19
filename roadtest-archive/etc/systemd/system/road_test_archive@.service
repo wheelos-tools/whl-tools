@@ -2,12 +2,18 @@
 Description=Archive road test data when disk with UUID %i is plugged in
 After=local-fs.target
 BindsTo=dev-disk-by\x2duuid-%i.device
+Requires=dev-disk-by\x2duuid-%i.device
 
 [Service]
 Type=oneshot
-User=your_user
-Group=your_group
+# The unit runs as root to allow mounting; to run unprivileged, create a drop-in.
 Environment=DEVICE_UUID=%i
+EnvironmentFile=-/etc/road_test_archive/%i.env
 ExecStart=/usr/local/bin/road_test_archive.sh
 StandardOutput=journal
 StandardError=journal
+KillMode=process
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

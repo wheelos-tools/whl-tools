@@ -1,0 +1,2 @@
+## Rule: start per-UUID systemd instance for road test archive
+ACTION=="add", SUBSYSTEM=="block", ENV{ID_FS_UUID}!="", TAG+="systemd", ENV{SYSTEMD_WANTS}+="road_test_archive@%E{ID_FS_UUID}.service"
