@@ -22,19 +22,65 @@ This repository provides a quick Docker-based setup to host an offline-capable B
 
 ---
 
+
 ## 3. Deployment & Startup
 
-### 3.1 Run the initializer
+This repository includes a convenience manager script `manage.sh` which wraps
+initialization and docker-compose operations. The script will detect whether
+`docker-compose` or the Docker CLI's `docker compose` subcommand is available
+and use the detected command.
 
-The `init.sh` script fixes directory permissions and updates any `source.json` entries in the `registry/` to point at the detected LAN IP.
+### 3.1 Quick deploy (recommended)
+
+From this directory run:
+
+```bash
+chmod +x manage.sh
+sudo ./manage.sh deploy
+```
+
+`deploy` will:
+
+- create necessary directories (`share`, `registry`, `filebrowser`, `squid/cache`)
+- initialize the filebrowser database
+- update registry `source.json` entries to point at the detected LAN IP
+- start the compose stack (file-server, bazel-registry, squid-proxy, filebrowser)
+
+After `deploy` completes it prints access instructions with the detected LAN
+IP.
+
+### 3.2 Troubleshooting & status
+
+Check stack health and endpoints:
+
+```bash
+./manage.sh status
+```
+
+Restart a single service or the entire stack:
+
+```bash
+./manage.sh restart file-server
+./manage.sh restart all
+```
+
+If you prefer to run compose manually the script supports `docker-compose` or
+`docker compose` — it will auto-detect which command to use.
+
+### 3.3 Optional: run initializer manually
+
+If you wish to run the low-level initializer directly (not required when using
+`manage.sh deploy`), you can run:
 
 ```bash
 chmod +x init.sh
 ./init.sh
-
 ```
 
-### 3.2 Verify access
+This fixes permissions and updates registry URLs, similar to what `deploy`
+performs.
+
+### 3.4 Verify access (endpoints)
 
 - **File Browser (admin UI)**: `http://<IP>:8082` (default admin/admin) — upload files to `share/`.
 - **File Server (downloads)**: `http://<IP>:8080` — serves `.tar.gz` source archives.
