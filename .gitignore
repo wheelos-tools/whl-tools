@@ -1,1 +1,3 @@
-http-server/share/build
+http-server/share/*
+http-server/filebrowser/*.db
+http-server/squid/cache/*
