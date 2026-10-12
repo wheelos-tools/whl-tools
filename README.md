@@ -4,6 +4,7 @@ This repository includes the following tools:
 
 - [Map Generation Tool](#map-generation-tool)
 - [Automated Data Copy Tool](#automated-data-copy-tool)
+- [Camera Recording Tool](#camera-recording-tool)
 
 ---
 
@@ -51,3 +52,19 @@ Disk UUID        : DE2411AE24118AA3
 ```
 
 🔗 [How to Create a Feishu Webhook](https://www.feishu.cn/hc/zh-CN/articles/807992406756-webhook-%E8%A7%A6%E5%8F%91%E5%99%A8)
+
+---
+
+## Camera Recording Tool
+
+Record all 8 vehicle cameras (`/dev/video0-7`) at the same time with GStreamer, and control the camera trigger. Runs on the host, outside the Apollo container.
+
+### Quick Start
+
+```bash
+cd rf_camera
+./record_cameras.sh -d 60   # record 60 seconds; Ctrl-C to stop early
+./trigger.sh status         # check GPS / PPS status
+```
+
+See [rf_camera/README.md](rf_camera/README.md) for details.
