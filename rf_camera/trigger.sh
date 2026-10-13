@@ -2,7 +2,7 @@
 # Manually control the camera adv trigger (FPGA, basa driver).
 #
 # Usage:
-#   ./trigger.sh start [-g] [DEV...]   enable trigger (default /dev/video0-7)
+#   ./trigger.sh start [-g] [DEV...]   enable trigger (default /dev/video0-8)
 #                                      -g: use GPS PPS instead of FPGA PPS
 #   ./trigger.sh stop [DEV...]         disable trigger
 #   ./trigger.sh status                show GPS / PPS status of the FPGA
@@ -42,7 +42,7 @@ internal = 1
 if "-g" in args:
     args.remove("-g")
     internal = 0
-devs = args or ["/dev/video%d" % i for i in range(8)]
+devs = args or ["/dev/video%d" % i for i in range(9)]
 failed = False
 for dev in devs:
     if cmd == "start":

@@ -57,13 +57,14 @@ Disk UUID        : DE2411AE24118AA3
 
 ## Camera Recording Tool
 
-Record all 8 vehicle cameras (`/dev/video0-7`) at the same time with GStreamer, and control the camera trigger. Runs on the host, outside the Apollo container.
+Record the vehicle cameras (`/dev/video0-8`, default 1,2,3,4,5,8) at the same time with GStreamer for long drives: rolling segments, bounded memory, a free-disk floor, and a clean stop on Ctrl-C. Also controls the camera trigger. Runs on the host, outside the Apollo container.
 
 ### Quick Start
 
 ```bash
 cd rf_camera
-./record_cameras.sh -d 60   # record 60 seconds; Ctrl-C to stop early
+./record_cameras.sh         # record until Ctrl-C (5 min segments)
+./record_cameras.sh -C 0-8  # pick cameras
 ./trigger.sh status         # check GPS / PPS status
 ```
 

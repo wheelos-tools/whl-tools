@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Open up permissions on /dev/video0-7 and list each camera's formats.
+# Open up permissions on /dev/video0-8 and list each camera's formats.
 
-for i in {0..7}; do
+for i in {0..8}; do
   dev="/dev/video${i}"
   echo "===== ${dev} ====="
   if [[ ! -e "${dev}" ]]; then
